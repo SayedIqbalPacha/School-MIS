@@ -1,0 +1,25 @@
+
+# Node.js dependencies ignore installed npm packages
+node_modules/
+
+# Ignore Environment variables and secrets
+.env
+.env.*
+# protect mongodb atlas connection string and password
+config.env
+*.env
+
+# Ignore generated log files that are created by npm and other tools
+*.log
+npm-debug.log*
+
+# ignore generated frontend build files like dist and build folders
+dist/
+build/
+
+# ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# ignore local vs code settings
+.vscode/
