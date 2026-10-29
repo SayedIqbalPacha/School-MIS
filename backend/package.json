@@ -11,5 +11,9 @@
   "keywords": [],
   "author": "pacha",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "slugify": "^1.6.9",
+    "validator": "^13.15.35"
+  }
 }
