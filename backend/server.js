@@ -37,3 +37,13 @@ const port = process.env.PORT || 9000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+// handling global unhandled promises in all over the application
+
+process.on('unhandledRejection', (err) => {
+  console.log(err.name, err.message);
+  console.log('UNHANDLED REJECTION SHUTTING DOWN');
+  server.colse(() => {
+    process.exit(1);
+  });
+});
