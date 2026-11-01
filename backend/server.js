@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
-
 const dotenv = require('dotenv');
+
+// unchaught exception are those erros that can occure in our app and we did not handle them.
+// like calling a variable that does not exist.
+process.on('uncaughtException', (err) => {
+  console.log('Uncauht Exception! Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
 const app = require('./app');
 
 dotenv.config({ path: './config/config.env' });
@@ -34,16 +42,15 @@ mongoose
 
 const port = process.env.PORT || 9000;
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
 // handling global unhandled promises in all over the application
-
 process.on('unhandledRejection', (err) => {
   console.log(err.name, err.message);
-  console.log('UNHANDLED REJECTION SHUTTING DOWN');
-  server.colse(() => {
+  console.log('UNHANDLED REJECTION! SHUTTING DOWN...');
+  server.close(() => {
     process.exit(1);
   });
 });
