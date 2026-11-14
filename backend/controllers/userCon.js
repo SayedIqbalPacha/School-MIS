@@ -39,6 +39,28 @@ exports.getOneUser = catchAsync(async (req, res, next) => {
   });
 });
 
+// Update a user's non-password fields. This route is restricted to managers.
+exports.updateUser = catchAsync(async (req, res, next) => {
+  const filteredBody = filterdObject(req.body, 'name', 'email', 'roles');
+  const user = await User.findByIdAndUpdate(req.params.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!user) return next(new appError('No user found with that ID', 404));
+
+  res.status(200).json({
+    status: 'success',
+    data: { user },
+  });
+});
+
+// Permanently delete a user. This route is restricted to managers.
+exports.deleteUser = catchAsync(async (req, res) => {
+  await User.findByIdAndDelete(req.params.id);
+  res.status(204).send();
+});
+
 // UPDATEME
 exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {

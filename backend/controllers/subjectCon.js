@@ -77,8 +77,9 @@ exports.getAllSubjects = CatchAsync(async (req, res) => {
 
 //get one subject
 
-exports.getOneSubject = CatchAsync(async (req, res) => {
+exports.getOneSubject = CatchAsync(async (req, res, next) => {
   const oneSubject = await subjectModel.findById(req.params.id);
+  if (!oneSubject) return next(new AppError('No subject found with that ID', 404));
   // subjectModel.findOne({_id: req.params.id}) is same to findById
   res.status(200).json({
     status: 'success',
@@ -89,12 +90,12 @@ exports.getOneSubject = CatchAsync(async (req, res) => {
 });
 
 // update subject
-exports.updateSubject = CatchAsync(async (req, res) => {
+exports.updateSubject = CatchAsync(async (req, res, next) => {
   const updatedSubject = await subjectModel.findById(req.params.id);
-  if (updatedSubject) {
-    Object.assign(updatedSubject, req.body);
-    await updatedSubject.save();
-  }
+  if (!updatedSubject) return next(new AppError('No subject found with that ID', 404));
+
+  Object.assign(updatedSubject, req.body);
+  await updatedSubject.save();
   res.status(200).json({
     status: 'success',
     data: {

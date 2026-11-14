@@ -5,7 +5,6 @@ const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/email');
 const crypto = require('crypto');
-const { stat } = require('fs');
 
 // This is used to create token based on id
 const signToken = (id) => {
@@ -48,6 +47,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   const token = signToken(newUser._id);
+  newUser.password = undefined;
   res.status(201).json({
     status: 'success',
     data: {
@@ -73,6 +73,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new appError('Incorrect email or password', 401));
   }
 
+  user.password = undefined;
   const token = signToken(user._id);
   res.status(200).json({
     status: 'success',
@@ -130,7 +131,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 // AUTHORIAZATION
 // ...roles is called rest parameter and used to pass an array of roles to the function
-exports.restrcitTo = (...roles) => {
+exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.roles)) {
       return next(

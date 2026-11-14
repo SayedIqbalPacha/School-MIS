@@ -17,9 +17,11 @@ const subjectSchema = new mongoose.Schema(
     },
     fessPrice: {
       type: Number,
+      alias: 'feesPrice',
     },
     fessDiscount: {
       type: Number,
+      alias: 'feesDiscount',
       // this validator only work on current docs like in create() and save() methods
       validate: {
         validator: function (value) {

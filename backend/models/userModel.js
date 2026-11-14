@@ -27,18 +27,19 @@ const userSchema = new mongoose.Schema({
   passwordConfirm: {
     type: String,
     required: [true, 'Please confirm your password!'],
+
+    validate: {
+      // this works only on CREATE and SAVE!!!
+      validator: function (el) {
+        return el === this.password;
+      },
+      message: 'Please provide the same passwords!',
+    },
   },
   roles: {
     type: String,
     enum: ['user', 'manager', 'teacher'],
     default: 'user',
-  },
-  validate: {
-    // this works only on CREATE and SAVE!!!
-    validator: function (el) {
-      return el === this.password;
-    },
-    message: 'Please provide the same passwords!',
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -46,7 +47,7 @@ const userSchema = new mongoose.Schema({
 
   active: {
     type: Boolean,
-    default: active,
+    default: true,
     select: false,
   },
 });
@@ -71,7 +72,7 @@ userSchema.pre('save', function (next) {
 });
 
 // this middlware says only find the users that is active.
-userSchema.pre('/^find/', function (next) {
+userSchema.pre(/^find/, function (next) {
   this.find({ active: { $ne: false } });
   next();
 });
