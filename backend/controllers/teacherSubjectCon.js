@@ -2,6 +2,7 @@ const TeacherSubject = require('../models/teacherSubjectModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 exports.createTeacherSubject = CatchAsync(async (req, res) => {
   const newTeacherSubject = await TeacherSubject.create(req.body);
@@ -67,12 +68,12 @@ exports.updateTeacherSubject = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteTeacherSubject = CatchAsync(async (req, res, next) => {
-  const teacherSubject = await TeacherSubject.findByIdAndDelete(req.params.id);
-  if (!teacherSubject) {
-    return next(
-      new AppError('No teacher-subject assignment found with that ID', 404),
-    );
-  }
+  await deleteIfUnreferenced(
+    'TeacherSubject',
+    TeacherSubject,
+    req.params.id,
+    'teacher-subject assignment',
+  );
 
   res.status(204).json({
     status: 'success',

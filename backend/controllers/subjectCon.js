@@ -2,6 +2,7 @@ const subjectModel = require('../models/subjectModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 // creating subject
 
@@ -76,10 +77,7 @@ exports.updateSubject = CatchAsync(async (req, res, next) => {
 // delete subject
 
 exports.deleteSubject = CatchAsync(async (req, res, next) => {
-  const subject = await subjectModel.findByIdAndDelete(req.params.id);
-  if (!subject) {
-    return next(new AppError('No subject found with that ID', 404));
-  }
+  await deleteIfUnreferenced('Subject', subjectModel, req.params.id, 'subject');
 
   return res.status(204).json({
     status: 'success',

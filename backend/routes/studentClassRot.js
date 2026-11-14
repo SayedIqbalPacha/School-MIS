@@ -1,5 +1,6 @@
 const express = require('express');
 const studentClassCon = require('../controllers/studentClassCon');
+const authCon = require('../controllers/authCon');
 
 const router = express.Router();
 
@@ -10,7 +11,15 @@ router
 router
   .route('/:id')
   .get(studentClassCon.getOneStudentClass)
-  .patch(studentClassCon.updateStudentClass)
-  .delete(studentClassCon.deleteStudentClass);
+  .patch(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    studentClassCon.updateStudentClass,
+  )
+  .delete(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    studentClassCon.deleteStudentClass,
+  );
 
 module.exports = router;

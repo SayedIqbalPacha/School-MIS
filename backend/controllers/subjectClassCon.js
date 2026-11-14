@@ -2,6 +2,7 @@ const SubjectClass = require('../models/subjectClassModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 exports.createSubjectClass = CatchAsync(async (req, res) => {
   const newSubjectClass = await SubjectClass.create(req.body);
@@ -63,10 +64,12 @@ exports.updateSubjectClass = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteSubjectClass = CatchAsync(async (req, res, next) => {
-  const subjectClass = await SubjectClass.findByIdAndDelete(req.params.id);
-  if (!subjectClass) {
-    return next(new AppError('No subject-class link found with that ID', 404));
-  }
+  await deleteIfUnreferenced(
+    'SubjectClass',
+    SubjectClass,
+    req.params.id,
+    'subject-class link',
+  );
 
   res.status(204).json({
     status: 'success',

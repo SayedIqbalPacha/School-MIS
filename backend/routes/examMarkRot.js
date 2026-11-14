@@ -1,5 +1,6 @@
 const express = require('express');
 const examMarkCon = require('../controllers/examMarkCon');
+const authCon = require('../controllers/authCon');
 
 const router = express.Router();
 
@@ -10,7 +11,15 @@ router
 router
   .route('/:id')
   .get(examMarkCon.getOneExamMark)
-  .patch(examMarkCon.updateExamMark)
-  .delete(examMarkCon.deleteExamMark);
+  .patch(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    examMarkCon.updateExamMark,
+  )
+  .delete(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    examMarkCon.deleteExamMark,
+  );
 
 module.exports = router;

@@ -2,6 +2,7 @@ const Student = require('../models/studentModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 exports.createStudent = CatchAsync(async (req, res) => {
   const newStudent = await Student.create(req.body);
@@ -46,7 +47,7 @@ exports.updateStudent = CatchAsync(async (req, res, next) => {
     req.params.id,
     req.body,
     { new: true, runValidators: true },
-  );
+  ).setOptions({ includeInactive: true });
   if (!updatedStudent) {
     return next(new AppError('No student found with that ID', 404));
   }
@@ -55,10 +56,7 @@ exports.updateStudent = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteStudent = CatchAsync(async (req, res, next) => {
-  const student = await Student.findByIdAndDelete(req.params.id);
-  if (!student) {
-    return next(new AppError('No student found with that ID', 404));
-  }
+  await deleteIfUnreferenced('Student', Student, req.params.id, 'student');
 
   res.status(204).json({
     status: 'success',

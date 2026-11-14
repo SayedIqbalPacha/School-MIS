@@ -1,5 +1,6 @@
 const express = require('express');
 const classAcademicYearCon = require('../controllers/classAcademicYearCon');
+const authCon = require('../controllers/authCon');
 
 const router = express.Router();
 
@@ -10,7 +11,15 @@ router
 router
   .route('/:id')
   .get(classAcademicYearCon.getOneClassAcademicYear)
-  .patch(classAcademicYearCon.updateClassAcademicYear)
-  .delete(classAcademicYearCon.deleteClassAcademicYear);
+  .patch(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    classAcademicYearCon.updateClassAcademicYear,
+  )
+  .delete(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    classAcademicYearCon.deleteClassAcademicYear,
+  );
 
 module.exports = router;

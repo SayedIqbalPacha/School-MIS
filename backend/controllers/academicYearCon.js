@@ -2,6 +2,7 @@ const AcademicYear = require('../models/academicYearModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 exports.createAcademicYear = CatchAsync(async (req, res) => {
   const newAcademicYear = await AcademicYear.create(req.body);
@@ -60,10 +61,12 @@ exports.updateAcademicYear = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteAcademicYear = CatchAsync(async (req, res, next) => {
-  const academicYear = await AcademicYear.findByIdAndDelete(req.params.id);
-  if (!academicYear) {
-    return next(new AppError('No academic year found with that ID', 404));
-  }
+  await deleteIfUnreferenced(
+    'AcademicYear',
+    AcademicYear,
+    req.params.id,
+    'academic year',
+  );
 
   res.status(204).json({
     status: 'success',

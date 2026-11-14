@@ -2,6 +2,7 @@ const Exam = require('../models/examModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 exports.createExam = CatchAsync(async (req, res) => {
   const newExam = await Exam.create(req.body);
@@ -54,10 +55,7 @@ exports.updateExam = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteExam = CatchAsync(async (req, res, next) => {
-  const exam = await Exam.findByIdAndDelete(req.params.id);
-  if (!exam) {
-    return next(new AppError('No exam found with that ID', 404));
-  }
+  await deleteIfUnreferenced('Exam', Exam, req.params.id, 'exam');
 
   res.status(204).json({
     status: 'success',

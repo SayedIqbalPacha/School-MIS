@@ -1,5 +1,6 @@
 const express = require('express');
 const teacherSubjectCon = require('../controllers/teacherSubjectCon');
+const authCon = require('../controllers/authCon');
 
 const router = express.Router();
 
@@ -10,7 +11,15 @@ router
 router
   .route('/:id')
   .get(teacherSubjectCon.getOneTeacherSubject)
-  .patch(teacherSubjectCon.updateTeacherSubject)
-  .delete(teacherSubjectCon.deleteTeacherSubject);
+  .patch(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    teacherSubjectCon.updateTeacherSubject,
+  )
+  .delete(
+    authCon.protect,
+    authCon.restrictTo('manager'),
+    teacherSubjectCon.deleteTeacherSubject,
+  );
 
 module.exports = router;

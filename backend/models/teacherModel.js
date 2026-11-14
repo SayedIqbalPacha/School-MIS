@@ -51,8 +51,25 @@ const teacherSchema = new mongoose.Schema(
         message: 'Salary must be zero or greater',
       },
     },
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true, collection: 'teacher' },
 );
+
+// Keep former teachers in the database for historical records, but exclude
+// inactive teachers from regular reads. Managers can opt in when updating.
+teacherSchema.pre(/^(find|countDocuments)/, function (next) {
+  const options = this.getOptions();
+  const { includeInactive } = options;
+  delete options.includeInactive;
+
+  if (!includeInactive) {
+    this.where({ active: { $ne: false } });
+  }
+  next();
+});
 
 module.exports = mongoose.model('Teacher', teacherSchema);

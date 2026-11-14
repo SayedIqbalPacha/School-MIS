@@ -2,6 +2,7 @@ const SchoolClass = require('../models/classModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
 
 exports.createClass = CatchAsync(async (req, res) => {
   const newClass = await SchoolClass.create(req.body);
@@ -55,10 +56,12 @@ exports.updateClass = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteClass = CatchAsync(async (req, res, next) => {
-  const schoolClass = await SchoolClass.findByIdAndDelete(req.params.id);
-  if (!schoolClass) {
-    return next(new AppError('No class found with that ID', 404));
-  }
+  await deleteIfUnreferenced(
+    'SchoolClass',
+    SchoolClass,
+    req.params.id,
+    'class',
+  );
 
   res.status(204).json({
     status: 'success',

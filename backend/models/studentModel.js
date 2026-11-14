@@ -56,8 +56,24 @@ const studentSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, 'Parent name cannot exceed 100 characters'],
     },
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true, collection: 'students' },
 );
+
+// Keep former students for academic history, but hide them from regular reads.
+studentSchema.pre(/^(find|countDocuments)/, function (next) {
+  const options = this.getOptions();
+  const { includeInactive } = options;
+  delete options.includeInactive;
+
+  if (!includeInactive) {
+    this.where({ active: { $ne: false } });
+  }
+  next();
+});
 
 module.exports = mongoose.model('Student', studentSchema);
