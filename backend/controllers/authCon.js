@@ -25,7 +25,7 @@ const createSendToken = (user, statusCode, res) => {
     httpOnly: true,
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-  res.cookie('jwt cookie', token, cookieOptions);
+  res.cookie('jwt', token, cookieOptions);
 
   // dont retunr and send the password in json and cookie response
   user.password = undefined;
@@ -38,7 +38,7 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
+exports.signup = catchAsync(async (req, res) => {
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
@@ -46,15 +46,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm,
   });
 
-  const token = signToken(newUser._id);
-  newUser.password = undefined;
-  res.status(201).json({
-    status: 'success',
-    data: {
-      user: newUser,
-      token,
-    },
-  });
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -73,15 +65,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new appError('Incorrect email or password', 401));
   }
 
-  user.password = undefined;
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    data: {
-      user,
-      token,
-    },
-  });
+  createSendToken(user, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -209,12 +193,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.passwordResetExpires = undefined;
   await user.save();
 
-  const token = signToken(user._id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
 
 // Updating user password
@@ -233,9 +212,5 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   await user.save();
 
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
