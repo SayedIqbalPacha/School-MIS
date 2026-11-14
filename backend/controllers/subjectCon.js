@@ -110,13 +110,16 @@ exports.deleteSubject = CatchAsync(async (req, res) => {
   res.status(204).send();
 });
 
+// here we are using aggregation pipeline to get the subject stats. aggregation pipeline is a framework for data aggregation modeled on the concept of data processing pipelines. Documents enter a multi-stage pipeline that transforms the documents into aggregated results.
 exports.getSubjectStats = CatchAsync(async (req, res) => {
   const stats = await subjectModel.aggregate([
+    // match is always used to filter the documents based on some conditions.
     {
       $match: {
         creditHours: { $gte: 1 },
       },
     },
+    // group is used to group the documents based on some conditions
     {
       $group: {
         _id: '$creditHours',
@@ -125,6 +128,8 @@ exports.getSubjectStats = CatchAsync(async (req, res) => {
         subjectNames: { $push: '$name' },
       },
     },
+    // here we sort the documents based on the _id field in ascending order.
+    //  if we want to sort in descending order then we can use -1 instead of 1.
     {
       $sort: { _id: 1 },
     },
