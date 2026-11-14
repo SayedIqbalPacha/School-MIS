@@ -6,6 +6,9 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 
 const app = express();
+// Register every Mongoose model so string refs are available to populate().
+require('./models');
+
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorCon');
 const subjectRot = require('./routes/subjectRot');

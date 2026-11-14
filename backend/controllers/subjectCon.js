@@ -38,7 +38,7 @@ exports.getAllSubjects = CatchAsync(async (req, res) => {
     const sortBy = req.query.sort.split(',').join(' ');
     query = query.sort(sortBy);
   } else {
-    query = query.sort('name');
+    query = query.sort('subjectName');
   }
 
   //3) field selection
@@ -46,8 +46,7 @@ exports.getAllSubjects = CatchAsync(async (req, res) => {
     const fields = req.query.fields.split(',').join(' ');
     query = query.select(fields);
   } else {
-    // here we exclude the updateAt field from the response by using -updateAt
-    query = query.select('-updateAt');
+    query = query.select('-updatedAt');
   }
 
   //4) pagination
@@ -79,7 +78,8 @@ exports.getAllSubjects = CatchAsync(async (req, res) => {
 
 exports.getOneSubject = CatchAsync(async (req, res, next) => {
   const oneSubject = await subjectModel.findById(req.params.id);
-  if (!oneSubject) return next(new AppError('No subject found with that ID', 404));
+  if (!oneSubject)
+    return next(new AppError('No subject found with that ID', 404));
   // subjectModel.findOne({_id: req.params.id}) is same to findById
   res.status(200).json({
     status: 'success',
@@ -92,7 +92,8 @@ exports.getOneSubject = CatchAsync(async (req, res, next) => {
 // update subject
 exports.updateSubject = CatchAsync(async (req, res, next) => {
   const updatedSubject = await subjectModel.findById(req.params.id);
-  if (!updatedSubject) return next(new AppError('No subject found with that ID', 404));
+  if (!updatedSubject)
+    return next(new AppError('No subject found with that ID', 404));
 
   Object.assign(updatedSubject, req.body);
   await updatedSubject.save();
@@ -126,7 +127,7 @@ exports.getSubjectStats = CatchAsync(async (req, res) => {
         _id: '$creditHours',
         totalSubjects: { $sum: 1 },
         // Push each subject's name into the array
-        subjectNames: { $push: '$name' },
+        subjectNames: { $push: '$subjectName' },
       },
     },
     // here we sort the documents based on the _id field in ascending order.
