@@ -11,8 +11,18 @@ require('./models');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorCon');
-const subjectRot = require('./routes/subjectRot');
 const userRot = require('./routes/userRot');
+const subjectRot = require('./routes/subjectRot');
+const teacherRot = require('./routes/teacherRot');
+const studentRot = require('./routes/studentRot');
+const classRot = require('./routes/classRot');
+const examRot = require('./routes/examRot');
+const academicYearRot = require('./routes/academicYearRot');
+const subjectClassRot = require('./routes/subjectClassRot');
+const studentClassRot = require('./routes/studentClassRot');
+const teacherSubjectRot = require('./routes/teacherSubjectRot');
+const classAcademicYearRot = require('./routes/classAcademicYearRot');
+const examMarkRot = require('./routes/examMarkRot');
 
 // reading data from body into req.body
 app.use(express.json());
@@ -43,6 +53,16 @@ app.use(hpp());
 
 app.use('/api/subjects', subjectRot);
 app.use('/api/users', userRot);
+app.use('/api/teachers', teacherRot);
+app.use('/api/students', studentRot);
+app.use('/api/classes', classRot);
+app.use('/api/exams', examRot);
+app.use('/api/academic-years', academicYearRot);
+app.use('/api/subject-classes', subjectClassRot);
+app.use('/api/student-classes', studentClassRot);
+app.use('/api/teacher-subjects', teacherSubjectRot);
+app.use('/api/class-academic-years', classAcademicYearRot);
+app.use('/api/exam-marks', examMarkRot);
 
 // handling unhandled routes
 //.all means consider all operation like get post delete ...

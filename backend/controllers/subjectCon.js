@@ -9,9 +9,7 @@ exports.createSubject = CatchAsync(async (req, res) => {
   const newSubject = await subjectModel.create(req.body);
   res.status(201).json({
     status: 'success',
-    data: {
-      subject: newSubject,
-    },
+    data: { newSubject },
   });
 });
 
@@ -39,9 +37,7 @@ exports.getAllSubjects = CatchAsync(async (req, res) => {
   const allSubjects = await features.query;
   res.status(200).json({
     status: 'success',
-    data: {
-      allSubjects,
-    },
+    data: { allSubjects },
   });
 });
 
@@ -54,33 +50,41 @@ exports.getOneSubject = CatchAsync(async (req, res, next) => {
   // subjectModel.findOne({_id: req.params.id}) is same to findById
   res.status(200).json({
     status: 'success',
-    data: {
-      oneSubject,
-    },
+    data: { oneSubject },
   });
 });
 
 // update subject
 exports.updateSubject = CatchAsync(async (req, res, next) => {
-  const updatedSubject = await subjectModel.findById(req.params.id);
+  const updatedSubject = await subjectModel.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
   if (!updatedSubject)
     return next(new AppError('No subject found with that ID', 404));
 
-  Object.assign(updatedSubject, req.body);
-  await updatedSubject.save();
   res.status(200).json({
     status: 'success',
-    data: {
-      updatedSubject,
-    },
+    data: { updatedSubject },
   });
 });
 
 // delete subject
 
-exports.deleteSubject = CatchAsync(async (req, res) => {
-  await subjectModel.findByIdAndDelete(req.params.id);
-  res.status(204).send();
+exports.deleteSubject = CatchAsync(async (req, res, next) => {
+  const subject = await subjectModel.findByIdAndDelete(req.params.id);
+  if (!subject) {
+    return next(new AppError('No subject found with that ID', 404));
+  }
+
+  return res.status(204).json({
+    status: 'success',
+    data: null,
+  });
 });
 
 // here we are using aggregation pipeline to get the subject stats. aggregation pipeline is a framework for data aggregation modeled on the concept of data processing pipelines. Documents enter a multi-stage pipeline that transforms the documents into aggregated results.
@@ -111,8 +115,6 @@ exports.getSubjectStats = CatchAsync(async (req, res) => {
   res.status(200).json({
     status: 'success',
     results: stats.length,
-    data: {
-      stats,
-    },
+    data: { stats },
   });
 });

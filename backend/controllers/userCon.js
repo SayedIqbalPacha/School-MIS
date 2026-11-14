@@ -19,9 +19,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: users.length,
-    data: {
-      users,
-    },
+    data: { users },
   });
 });
 
@@ -33,9 +31,7 @@ exports.getOneUser = catchAsync(async (req, res, next) => {
   }
   res.status(200).json({
     status: 'success',
-    data: {
-      user,
-    },
+    data: { user },
   });
 });
 
@@ -58,7 +54,10 @@ exports.updateUser = catchAsync(async (req, res, next) => {
 // Permanently delete a user. This route is restricted to managers.
 exports.deleteUser = catchAsync(async (req, res) => {
   await User.findByIdAndDelete(req.params.id);
-  res.status(204).send();
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  });
 });
 
 // UPDATEME
@@ -79,9 +78,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   });
   res.status(200).json({
     status: 'success',
-    data: {
-      user: updateUser,
-    },
+    data: { updateUser },
   });
 });
 
