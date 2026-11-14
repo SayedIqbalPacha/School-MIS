@@ -1,6 +1,7 @@
 const subjectModel = require('../models/subjectModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
+const APIFeatures = require('../utils/apiFeatures');
 
 // creating subject
 
@@ -17,55 +18,25 @@ exports.createSubject = CatchAsync(async (req, res) => {
 //get all subjects
 
 exports.getAllSubjects = CatchAsync(async (req, res) => {
-  //1) filtering
-  const queryObj = { ...req.query };
-  const excludeFields = ['page', 'sort', 'limit', 'fields'];
-  // remove excludeFields from queryObj
-  excludeFields.forEach((el) => delete queryObj[el]);
-
-  //advanced filtering
-
-  // JSON.stringify() converts object into string
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
-  // build query
-  let query = subjectModel.find(JSON.parse(queryStr));
-
-  //2) sorting
-  if (req.query.sort) {
-    //split means split based on a comma and then join means join based on a space
-    const sortBy = req.query.sort.split(',').join(' ');
-    query = query.sort(sortBy);
-  } else {
-    query = query.sort('subjectName');
-  }
-
-  //3) field selection
-  if (req.query.fields) {
-    const fields = req.query.fields.split(',').join(' ');
-    query = query.select(fields);
-  } else {
-    query = query.select('-updatedAt');
-  }
-
-  //4) pagination
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 100;
-  const skip = (page - 1) * limit;
-
-  query = query.skip(skip).limit(limit);
+  const features = new APIFeatures(subjectModel.find(), req.query, {
+    defaultSort: 'subjectName',
+    defaultFields: '-updatedAt',
+  })
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
 
   if (req.query.page) {
     const subjectCount = await subjectModel.countDocuments(
-      JSON.parse(queryStr),
+      features.filterQuery,
     );
 
-    if (subjectCount > 0 && skip >= subjectCount)
+    if (subjectCount > 0 && features.skip >= subjectCount)
       throw new AppError('This page does not exist', 404);
   }
 
-  const allSubjects = await query;
+  const allSubjects = await features.query;
   res.status(200).json({
     status: 'success',
     data: {
