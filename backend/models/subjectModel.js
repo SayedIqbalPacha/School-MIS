@@ -33,4 +33,18 @@ subjectSchema.virtual('nameLength').get(function () {
   return this.subjectName.length;
 });
 
+subjectSchema.pre(
+  'findOneAndDelete',
+  checks.preventDeletionWhenReferenced(
+    [
+      {
+        modelName: 'SubjectClass',
+        field: 'subjectId',
+        label: 'subject-class links',
+      },
+    ],
+    'subject',
+  ),
+);
+
 module.exports = mongoose.model('Subject', subjectSchema);

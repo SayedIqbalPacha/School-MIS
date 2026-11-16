@@ -6,9 +6,9 @@ const handleCastErrorDB = (err) => {
 };
 
 const handleDuplicateFieldsDB = (err) => {
-  // the regular expression give us the dublicated value extracted from err.errmsg
-  const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  console.log(value);
+  const value = err.keyValue
+    ? Object.values(err.keyValue).join(', ')
+    : 'the submitted value';
 
   const message = `Duplicate field value: ${value}. Please use another value!`;
   return new AppError(message, 400);
@@ -65,29 +65,21 @@ const sendErrorProd = (err, res) => {
 module.exports = (err, req, res, next) => {
   // console.log(err.stack);
 
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  let error = err;
+
+  // Normalize database and token errors in both environments.
+  if (error.name === 'CastError') error = handleCastErrorDB(error);
+  if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+  if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+  if (error.name === 'JsonWebTokenError') error = handleJWTError();
+  if (error.name === 'TokenExpiredError') error = handleTokenExpiredError();
+
+  error.statusCode = error.statusCode || 500;
+  error.status = error.status || 'error';
 
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, res);
-  } else if (process.env.NODE_ENV === 'production') {
-    let error = { ...err };
-
-    // here CastError is mongoose error that shows the invalid id and other similer things
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
-
-    // this code is given to us when we try to fill in dublicated values
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-
-    // like invalid inputs for inputs
-    if (error.name === 'ValidationError')
-      error = handleValidationErrorDB(error);
-
-    if (error.name === 'JsonWebTokenError') error = handleJWTError();
-
-    if (error.name === 'TokenExpiredError')
-      error = handleTokenExpiredError();
-
+    sendErrorDev(error, res);
+  } else {
     sendErrorProd(error, res);
   }
 };

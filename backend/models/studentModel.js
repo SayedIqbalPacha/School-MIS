@@ -65,6 +65,21 @@ const studentSchema = new mongoose.Schema(
 );
 
 // Keep former students for academic history, but hide them from regular reads.
+studentSchema.pre(
+  'findOneAndDelete',
+  checks.preventDeletionWhenReferenced(
+    [
+      {
+        modelName: 'StudentClass',
+        field: 'studentId',
+        label: 'student-class enrollments',
+      },
+      { modelName: 'ExamMark', field: 'studentId', label: 'exam marks' },
+    ],
+    'student',
+  ),
+);
+
 studentSchema.pre(/^(find|countDocuments)/, function (next) {
   const options = this.getOptions();
   const { includeInactive } = options;

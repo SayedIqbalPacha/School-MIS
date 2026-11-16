@@ -2,19 +2,8 @@ const StudentClass = require('../models/studentClassModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const Student = require('../models/studentModel');
-const ClassAcademicYear = require('../models/classAcademicYearModel');
-const validateReferences = require('../utils/validateReferences');
 
 exports.createStudentClass = CatchAsync(async (req, res) => {
-  await validateReferences([
-    { Model: Student, id: req.body.studentId, label: 'Student' },
-    {
-      Model: ClassAcademicYear,
-      id: req.body.classAcademicId,
-      label: 'Class academic year',
-    },
-  ]);
   const newStudentClass = await StudentClass.create(req.body);
   res.status(201).json({
     status: 'success',
@@ -58,14 +47,6 @@ exports.getOneStudentClass = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateStudentClass = CatchAsync(async (req, res, next) => {
-  await validateReferences([
-    { Model: Student, id: req.body.studentId, label: 'Student' },
-    {
-      Model: ClassAcademicYear,
-      id: req.body.classAcademicId,
-      label: 'Class academic year',
-    },
-  ]);
   const updatedStudentClass = await StudentClass.findByIdAndUpdate(
     req.params.id,
     req.body,

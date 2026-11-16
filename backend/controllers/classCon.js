@@ -2,8 +2,6 @@ const SchoolClass = require('../models/classModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const SubjectClass = require('../models/subjectClassModel');
-const ClassAcademicYear = require('../models/classAcademicYearModel');
 
 exports.createClass = CatchAsync(async (req, res) => {
   const newClass = await SchoolClass.create(req.body);
@@ -57,28 +55,9 @@ exports.updateClass = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteClass = CatchAsync(async (req, res, next) => {
-  const schoolClass = await SchoolClass.findById(req.params.id);
+  const schoolClass = await SchoolClass.findByIdAndDelete(req.params.id);
   if (!schoolClass)
     return next(new AppError('No class found with that ID', 404));
-
-  const [hasSubjectLinks, hasAcademicYears] = await Promise.all([
-    SubjectClass.exists({ classId: schoolClass._id }),
-    ClassAcademicYear.exists({ classId: schoolClass._id }),
-  ]);
-  if (hasSubjectLinks || hasAcademicYears) {
-    const references = [];
-    if (hasSubjectLinks) references.push('subject-class links');
-    if (hasAcademicYears) references.push('class academic years');
-
-    return next(
-      new AppError(
-        `Cannot delete this class because ${references.join(' and ')} reference it`,
-        409,
-      ),
-    );
-  }
-
-  await SchoolClass.findByIdAndDelete(schoolClass._id);
 
   res.status(204).json({
     status: 'success',

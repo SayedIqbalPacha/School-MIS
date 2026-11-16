@@ -48,4 +48,31 @@ const classSchema = new mongoose.Schema(
 
 classSchema.index({ className: 1 });
 
+classSchema.pre(
+  'findOneAndDelete',
+  checks.preventDeletionWhenReferenced(
+    [
+      {
+        modelName: 'SubjectClass',
+        field: 'classId',
+        label: 'subject-class links',
+      },
+      {
+        modelName: 'ClassAcademicYear',
+        field: 'classId',
+        label: 'class academic years',
+      },
+    ],
+    'class',
+  ),
+);
+classSchema.pre(
+  'findOneAndUpdate',
+  checks.validateDateOrderOnUpdate(
+    'classStartDate',
+    'classEndDate',
+    'Class end date must be on or after its start date',
+  ),
+);
+
 module.exports = mongoose.model('SchoolClass', classSchema);

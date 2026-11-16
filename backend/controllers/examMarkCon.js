@@ -2,27 +2,8 @@ const ExamMark = require('../models/examMarkModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const Student = require('../models/studentModel');
-const Exam = require('../models/examModel');
-const ClassAcademicYear = require('../models/classAcademicYearModel');
-const TeacherSubject = require('../models/teacherSubjectModel');
-const validateReferences = require('../utils/validateReferences');
 
 exports.createExamMark = CatchAsync(async (req, res) => {
-  await validateReferences([
-    { Model: Student, id: req.body.studentId, label: 'Student' },
-    { Model: Exam, id: req.body.examId, label: 'Exam' },
-    {
-      Model: ClassAcademicYear,
-      id: req.body.classAcademicId,
-      label: 'Class academic year',
-    },
-    {
-      Model: TeacherSubject,
-      id: req.body.teacherSubjectId,
-      label: 'Teacher-subject assignment',
-    },
-  ]);
   const newExamMark = await ExamMark.create(req.body);
   res.status(201).json({
     status: 'success',
@@ -61,20 +42,6 @@ exports.getOneExamMark = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateExamMark = CatchAsync(async (req, res, next) => {
-  await validateReferences([
-    { Model: Student, id: req.body.studentId, label: 'Student' },
-    { Model: Exam, id: req.body.examId, label: 'Exam' },
-    {
-      Model: ClassAcademicYear,
-      id: req.body.classAcademicId,
-      label: 'Class academic year',
-    },
-    {
-      Model: TeacherSubject,
-      id: req.body.teacherSubjectId,
-      label: 'Teacher-subject assignment',
-    },
-  ]);
   const updatedExamMark = await ExamMark.findByIdAndUpdate(
     req.params.id,
     req.body,

@@ -26,4 +26,27 @@ const academicYearSchema = new mongoose.Schema(
   { timestamps: true, collection: 'academic_years' },
 );
 
+academicYearSchema.pre(
+  'findOneAndDelete',
+  checks.preventDeletionWhenReferenced(
+    [
+      { modelName: 'Exam', field: 'academicYearId', label: 'exams' },
+      {
+        modelName: 'ClassAcademicYear',
+        field: 'academicYearId',
+        label: 'class academic years',
+      },
+    ],
+    'academic year',
+  ),
+);
+academicYearSchema.pre(
+  'findOneAndUpdate',
+  checks.validateDateOrderOnUpdate(
+    'startDate',
+    'endDate',
+    'Academic year end date must be on or after its start date',
+  ),
+);
+
 module.exports = mongoose.model('AcademicYear', academicYearSchema);

@@ -61,6 +61,20 @@ const teacherSchema = new mongoose.Schema(
 
 // Keep former teachers in the database for historical records, but exclude
 // inactive teachers from regular reads. Managers can opt in when updating.
+teacherSchema.pre(
+  'findOneAndDelete',
+  checks.preventDeletionWhenReferenced(
+    [
+      {
+        modelName: 'TeacherSubject',
+        field: 'teacherId',
+        label: 'teacher-subject assignments',
+      },
+    ],
+    'teacher',
+  ),
+);
+
 teacherSchema.pre(/^(find|countDocuments)/, function (next) {
   const options = this.getOptions();
   const { includeInactive } = options;

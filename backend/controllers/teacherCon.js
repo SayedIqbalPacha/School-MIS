@@ -2,7 +2,6 @@ const Teacher = require('../models/teacherModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const TeacherSubject = require('../models/teacherSubjectModel');
 
 exports.createTeacher = CatchAsync(async (req, res) => {
   const newTeacher = await Teacher.create(req.body);
@@ -56,27 +55,10 @@ exports.updateTeacher = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteTeacher = CatchAsync(async (req, res, next) => {
-  const teacherQuery = Teacher.findById(req.params.id).setOptions({
+  const teacher = await Teacher.findByIdAndDelete(req.params.id).setOptions({
     includeInactive: true,
   });
-  const teacher = await teacherQuery;
   if (!teacher) return next(new AppError('No teacher found with that ID', 404));
-
-  const hasAssignments = await TeacherSubject.exists({
-    teacherId: teacher._id,
-  });
-  if (hasAssignments) {
-    return next(
-      new AppError(
-        'Cannot delete this teacher because teacher-subject assignments reference it',
-        409,
-      ),
-    );
-  }
-
-  await Teacher.findByIdAndDelete(teacher._id).setOptions({
-    includeInactive: true,
-  });
 
   res.status(204).json({
     status: 'success',
