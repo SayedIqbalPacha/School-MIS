@@ -4,10 +4,13 @@ const authCon = require('../controllers/authCon');
 
 const router = express.Router();
 
-router.route('/').get(studentCon.getAllStudents).post(studentCon.createStudent);
+router
+  .route('/')
+  .get(authCon.protect, studentCon.getAllStudents)
+  .post(authCon.protect, studentCon.createStudent);
 router
   .route('/:id')
-  .get(studentCon.getOneStudent)
+  .get(authCon.protect, studentCon.getOneStudent)
   .patch(
     authCon.protect,
     authCon.restrictTo('manager'),

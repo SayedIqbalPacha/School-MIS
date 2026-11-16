@@ -4,10 +4,13 @@ const authCon = require('../controllers/authCon');
 
 const router = express.Router();
 
-router.route('/').get(examCon.getAllExams).post(examCon.createExam);
+router
+  .route('/')
+  .get(authCon.protect, examCon.getAllExams)
+  .post(authCon.protect, examCon.createExam);
 router
   .route('/:id')
-  .get(examCon.getOneExam)
+  .get(authCon.protect, examCon.getOneExam)
   .patch(authCon.protect, authCon.restrictTo('manager'), examCon.updateExam)
   .delete(authCon.protect, authCon.restrictTo('manager'), examCon.deleteExam);
 

@@ -5,8 +5,19 @@ const APIFeatures = require('../utils/apiFeatures');
 const StudentClass = require('../models/studentClassModel');
 const TeacherSubject = require('../models/teacherSubjectModel');
 const ExamMark = require('../models/examMarkModel');
+const SchoolClass = require('../models/classModel');
+const AcademicYear = require('../models/academicYearModel');
+const validateReferences = require('../utils/validateReferences');
 
 exports.createClassAcademicYear = CatchAsync(async (req, res) => {
+  await validateReferences([
+    { Model: SchoolClass, id: req.body.classId, label: 'Class' },
+    {
+      Model: AcademicYear,
+      id: req.body.academicYearId,
+      label: 'Academic year',
+    },
+  ]);
   const newClassAcademicYear = await ClassAcademicYear.create(req.body);
   res.status(201).json({
     status: 'success',
@@ -53,6 +64,14 @@ exports.getOneClassAcademicYear = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateClassAcademicYear = CatchAsync(async (req, res, next) => {
+  await validateReferences([
+    { Model: SchoolClass, id: req.body.classId, label: 'Class' },
+    {
+      Model: AcademicYear,
+      id: req.body.academicYearId,
+      label: 'Academic year',
+    },
+  ]);
   const updatedClassAcademicYear = await ClassAcademicYear.findByIdAndUpdate(
     req.params.id,
     req.body,

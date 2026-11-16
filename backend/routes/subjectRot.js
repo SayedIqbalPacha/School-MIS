@@ -1,6 +1,7 @@
 const express = require('express');
 const subjectCon = require('../controllers/subjectCon');
 const authCon = require('../controllers/authCon');
+
 const router = express.Router();
 
 router.post(
@@ -12,7 +13,7 @@ router.post(
 
 router.get('/', authCon.protect, subjectCon.getAllSubjects);
 
-router.get('/stats', subjectCon.getSubjectStats);
+router.get('/stats', authCon.protect, subjectCon.getSubjectStats);
 
 router.get('/:id', authCon.protect, subjectCon.getOneSubject);
 

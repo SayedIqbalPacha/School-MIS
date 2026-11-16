@@ -29,27 +29,27 @@ const DB = process.env.DATABASE.replace(
   encodeURIComponent(process.env.DATABASE_PASSWORD),
 );
 
+const port = process.env.PORT || 9000;
+let server;
+
 mongoose
-  // this is for local database connection
-  //.connect(process.env.DATABASE_LOCAL)
   .connect(DB)
   .then(() => {
     console.log('DB connection successful');
+    server = app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
   })
   .catch((err) => {
     console.error('DB connection failed:', err.message);
+    process.exit(1);
   });
-
-const port = process.env.PORT || 9000;
-
-const server = app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
 
 // handling global unhandled promises in all over the application
 process.on('unhandledRejection', (err) => {
   console.log(err.name, err.message);
   console.log('UNHANDLED REJECTION! SHUTTING DOWN...');
+  if (!server) return process.exit(1);
   server.close(() => {
     process.exit(1);
   });

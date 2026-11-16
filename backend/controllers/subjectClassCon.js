@@ -3,8 +3,15 @@ const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
 const TeacherSubject = require('../models/teacherSubjectModel');
+const Subject = require('../models/subjectModel');
+const SchoolClass = require('../models/classModel');
+const validateReferences = require('../utils/validateReferences');
 
 exports.createSubjectClass = CatchAsync(async (req, res) => {
+  await validateReferences([
+    { Model: Subject, id: req.body.subjectId, label: 'Subject' },
+    { Model: SchoolClass, id: req.body.classId, label: 'Class' },
+  ]);
   const newSubjectClass = await SubjectClass.create(req.body);
   res.status(201).json({
     status: 'success',
@@ -48,6 +55,10 @@ exports.getOneSubjectClass = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateSubjectClass = CatchAsync(async (req, res, next) => {
+  await validateReferences([
+    { Model: Subject, id: req.body.subjectId, label: 'Subject' },
+    { Model: SchoolClass, id: req.body.classId, label: 'Class' },
+  ]);
   const updatedSubjectClass = await SubjectClass.findByIdAndUpdate(
     req.params.id,
     req.body,

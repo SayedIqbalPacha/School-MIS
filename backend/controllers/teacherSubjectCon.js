@@ -3,8 +3,25 @@ const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
 const ExamMark = require('../models/examMarkModel');
+const Teacher = require('../models/teacherModel');
+const SubjectClass = require('../models/subjectClassModel');
+const ClassAcademicYear = require('../models/classAcademicYearModel');
+const validateReferences = require('../utils/validateReferences');
 
 exports.createTeacherSubject = CatchAsync(async (req, res) => {
+  await validateReferences([
+    { Model: Teacher, id: req.body.teacherId, label: 'Teacher' },
+    {
+      Model: SubjectClass,
+      id: req.body.subjectClassId,
+      label: 'Subject-class link',
+    },
+    {
+      Model: ClassAcademicYear,
+      id: req.body.classAcademicId,
+      label: 'Class academic year',
+    },
+  ]);
   const newTeacherSubject = await TeacherSubject.create(req.body);
   res.status(201).json({
     status: 'success',
@@ -50,6 +67,19 @@ exports.getOneTeacherSubject = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateTeacherSubject = CatchAsync(async (req, res, next) => {
+  await validateReferences([
+    { Model: Teacher, id: req.body.teacherId, label: 'Teacher' },
+    {
+      Model: SubjectClass,
+      id: req.body.subjectClassId,
+      label: 'Subject-class link',
+    },
+    {
+      Model: ClassAcademicYear,
+      id: req.body.classAcademicId,
+      label: 'Class academic year',
+    },
+  ]);
   const updatedTeacherSubject = await TeacherSubject.findByIdAndUpdate(
     req.params.id,
     req.body,

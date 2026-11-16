@@ -6,11 +6,11 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(academicYearCon.getAllAcademicYears)
-  .post(academicYearCon.createAcademicYear);
+  .get(authCon.protect, academicYearCon.getAllAcademicYears)
+  .post(authCon.protect, academicYearCon.createAcademicYear);
 router
   .route('/:id')
-  .get(academicYearCon.getOneAcademicYear)
+  .get(authCon.protect, academicYearCon.getOneAcademicYear)
   .patch(
     authCon.protect,
     authCon.restrictTo('manager'),

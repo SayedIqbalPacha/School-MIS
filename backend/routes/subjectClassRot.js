@@ -6,11 +6,11 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(subjectClassCon.getAllSubjectClasses)
-  .post(subjectClassCon.createSubjectClass);
+  .get(authCon.protect, subjectClassCon.getAllSubjectClasses)
+  .post(authCon.protect, subjectClassCon.createSubjectClass);
 router
   .route('/:id')
-  .get(subjectClassCon.getOneSubjectClass)
+  .get(authCon.protect, subjectClassCon.getOneSubjectClass)
   .patch(
     authCon.protect,
     authCon.restrictTo('manager'),

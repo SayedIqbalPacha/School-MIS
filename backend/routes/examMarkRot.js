@@ -6,11 +6,11 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(examMarkCon.getAllExamMarks)
-  .post(examMarkCon.createExamMark);
+  .get(authCon.protect, examMarkCon.getAllExamMarks)
+  .post(authCon.protect, examMarkCon.createExamMark);
 router
   .route('/:id')
-  .get(examMarkCon.getOneExamMark)
+  .get(authCon.protect, examMarkCon.getOneExamMark)
   .patch(
     authCon.protect,
     authCon.restrictTo('manager'),

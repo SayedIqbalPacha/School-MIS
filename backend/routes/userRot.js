@@ -9,8 +9,18 @@ router.post('/login', authCon.login);
 router.post('/forgotPassword', authCon.forgotPassword);
 router.patch('/resetPassword/:token', authCon.resetPassword);
 router.patch('/updateMyPassword', authCon.protect, authCon.updatePassword);
-router.patch('/updateME', authCon.protect, userCon.updateMe);
-router.delete('/deleteMe', authCon.protect, userCon.deleteME);
+router.patch(
+  '/updateME',
+  authCon.protect,
+  authCon.restrictTo('manager'),
+  userCon.updateMe,
+);
+router.delete(
+  '/deleteMe',
+  authCon.protect,
+  authCon.restrictTo('manager'),
+  userCon.deleteME,
+);
 
 router
   .route('/')
