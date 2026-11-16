@@ -2,7 +2,7 @@ const subjectModel = require('../models/subjectModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
+const SubjectClass = require('../models/subjectClassModel');
 
 // creating subject
 
@@ -77,7 +77,22 @@ exports.updateSubject = CatchAsync(async (req, res, next) => {
 // delete subject
 
 exports.deleteSubject = CatchAsync(async (req, res, next) => {
-  await deleteIfUnreferenced('Subject', subjectModel, req.params.id, 'subject');
+  const subject = await subjectModel.findById(req.params.id);
+  if (!subject) {
+    return next(new AppError('No subject found with that ID', 404));
+  }
+
+  const hasClassLinks = await SubjectClass.exists({ subjectId: subject._id });
+  if (hasClassLinks) {
+    return next(
+      new AppError(
+        'Cannot delete this subject because subject-class links reference it',
+        409,
+      ),
+    );
+  }
+
+  await subjectModel.findByIdAndDelete(subject._id);
 
   return res.status(204).json({
     status: 'success',

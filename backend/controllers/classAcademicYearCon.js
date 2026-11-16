@@ -2,7 +2,9 @@ const ClassAcademicYear = require('../models/classAcademicYearModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
+const StudentClass = require('../models/studentClassModel');
+const TeacherSubject = require('../models/teacherSubjectModel');
+const ExamMark = require('../models/examMarkModel');
 
 exports.createClassAcademicYear = CatchAsync(async (req, res) => {
   const newClassAcademicYear = await ClassAcademicYear.create(req.body);
@@ -67,12 +69,31 @@ exports.updateClassAcademicYear = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteClassAcademicYear = CatchAsync(async (req, res, next) => {
-  await deleteIfUnreferenced(
-    'ClassAcademicYear',
-    ClassAcademicYear,
-    req.params.id,
-    'class academic year',
-  );
+  const classAcademicYear = await ClassAcademicYear.findById(req.params.id);
+  if (!classAcademicYear) {
+    return next(new AppError('No class academic year found with that ID', 404));
+  }
+
+  const [hasEnrollments, hasAssignments, hasExamMarks] = await Promise.all([
+    StudentClass.exists({ classAcademicId: classAcademicYear._id }),
+    TeacherSubject.exists({ classAcademicId: classAcademicYear._id }),
+    ExamMark.exists({ classAcademicId: classAcademicYear._id }),
+  ]);
+  if (hasEnrollments || hasAssignments || hasExamMarks) {
+    const references = [];
+    if (hasEnrollments) references.push('student-class enrollments');
+    if (hasAssignments) references.push('teacher-subject assignments');
+    if (hasExamMarks) references.push('exam marks');
+
+    return next(
+      new AppError(
+        `Cannot delete this class academic year because ${references.join(' and ')} reference it`,
+        409,
+      ),
+    );
+  }
+
+  await ClassAcademicYear.findByIdAndDelete(classAcademicYear._id);
 
   res.status(204).json({
     status: 'success',

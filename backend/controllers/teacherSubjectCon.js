@@ -2,7 +2,7 @@ const TeacherSubject = require('../models/teacherSubjectModel');
 const AppError = require('../utils/appError');
 const CatchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
-const deleteIfUnreferenced = require('../utils/deleteIfUnreferenced');
+const ExamMark = require('../models/examMarkModel');
 
 exports.createTeacherSubject = CatchAsync(async (req, res) => {
   const newTeacherSubject = await TeacherSubject.create(req.body);
@@ -68,12 +68,26 @@ exports.updateTeacherSubject = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteTeacherSubject = CatchAsync(async (req, res, next) => {
-  await deleteIfUnreferenced(
-    'TeacherSubject',
-    TeacherSubject,
-    req.params.id,
-    'teacher-subject assignment',
-  );
+  const teacherSubject = await TeacherSubject.findById(req.params.id);
+  if (!teacherSubject) {
+    return next(
+      new AppError('No teacher-subject assignment found with that ID', 404),
+    );
+  }
+
+  const hasExamMarks = await ExamMark.exists({
+    teacherSubjectId: teacherSubject._id,
+  });
+  if (hasExamMarks) {
+    return next(
+      new AppError(
+        'Cannot delete this teacher-subject assignment because exam marks reference it',
+        409,
+      ),
+    );
+  }
+
+  await TeacherSubject.findByIdAndDelete(teacherSubject._id);
 
   res.status(204).json({
     status: 'success',
