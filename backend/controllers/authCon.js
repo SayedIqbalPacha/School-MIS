@@ -6,6 +6,17 @@ const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/email');
 const crypto = require('crypto');
 
+const getCookieOptions = () => {
+  const sameSite = (process.env.JWT_COOKIE_SAME_SITE || 'lax').toLowerCase();
+
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' || sameSite === 'none',
+    sameSite,
+    path: '/',
+  };
+};
+
 // This is used to create token based on id
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -19,20 +30,26 @@ const createSendToken = (user, statusCode, res) => {
   // Here we made a cookie to send the token in a secure cookie,
   // a cookie is text that the server sent that to client and the client can send it back to server with all requests.
   const cookieOptions = {
+    ...getCookieOptions(),
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000,
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
     ),
-    httpOnly: true,
   };
-  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
   res.cookie('jwt', token, cookieOptions);
 
   // dont retunr and send the password in json and cookie response
   user.password = undefined;
   res.status(statusCode).json({
     status: 'success',
-    token,
     data: { user },
+  });
+};
+
+exports.logout = (req, res) => {
+  res.clearCookie('jwt', getCookieOptions());
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully.',
   });
 };
 
@@ -67,14 +84,8 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
-  // 1) Getting token and check if it's there
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  // The browser sends the HttpOnly JWT cookie automatically with credentials.
+  const token = req.cookies?.jwt;
 
   if (!token) {
     return next(

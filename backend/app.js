@@ -1,6 +1,8 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
@@ -26,6 +28,56 @@ const examMarkRot = require('./routes/examMarkRot');
 
 // reading data from body into req.body
 app.use(express.json());
+app.use(cookieParser());
+
+// Allow the React app to send and receive the authentication cookie.
+// Set CLIENT_URL in config.env when the frontend is hosted on another origin.
+const getAllowedOrigins = () => {
+  const configuredOrigins = (process.env.CLIENT_URL || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (process.env.NODE_ENV !== 'production') {
+    configuredOrigins.push(
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    );
+  }
+
+  return configuredOrigins;
+};
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || getAllowedOrigins().includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
+    credentials: true,
+  }),
+);
+
+// Reject cross-origin browser requests that can change data. CORS alone does
+// not prevent a browser from sending a forged request with a user's cookie.
+app.use((req, res, next) => {
+  const changesData = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+  const origin = req.get('origin');
+
+  if (!changesData || !origin) return next();
+
+  const sameOrigin = `${req.protocol}://${req.get('host')}`;
+  if (origin === sameOrigin || getAllowedOrigins().includes(origin)) {
+    return next();
+  }
+
+  return next(new AppError('Request origin is not allowed.', 403));
+});
 
 // GLOBAL MIDDLEWAREs
 
