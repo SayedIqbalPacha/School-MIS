@@ -15,24 +15,19 @@ exports.getAllSubjectClasses = CatchAsync(async (req, res) => {
   const features = new APIFeatures(SubjectClass.find(), req.query, {
     defaultSort: 'createdAt',
     defaultFields: '-updatedAt',
+    searchFields: ['subjectId', 'classId'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const subjectClassCount = await SubjectClass.countDocuments(
-      features.filterQuery,
-    );
-    if (subjectClassCount > 0 && features.skip >= subjectClassCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allSubjectClasses = await features.query;
+  const { documents: allSubjectClasses, pagination } = await features.execute();
   res.status(200).json({
     status: 'success',
+    results: allSubjectClasses.length,
+    pagination,
     data: { allSubjectClasses },
   });
 });

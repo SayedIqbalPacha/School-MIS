@@ -15,23 +15,21 @@ exports.getAllAcademicYears = CatchAsync(async (req, res) => {
   const features = new APIFeatures(AcademicYear.find(), req.query, {
     defaultSort: 'startDate',
     defaultFields: '-updatedAt',
+    searchFields: ['academicYearName'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const academicYearCount = await AcademicYear.countDocuments(
-      features.filterQuery,
-    );
-    if (academicYearCount > 0 && features.skip >= academicYearCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allAcademicYears = await features.query;
-  res.status(200).json({ status: 'success', data: { allAcademicYears } });
+  const { documents: allAcademicYears, pagination } = await features.execute();
+  res.status(200).json({
+    status: 'success',
+    results: allAcademicYears.length,
+    pagination,
+    data: { allAcademicYears },
+  });
 });
 
 exports.getOneAcademicYear = CatchAsync(async (req, res, next) => {

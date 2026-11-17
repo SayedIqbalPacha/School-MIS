@@ -15,21 +15,27 @@ exports.getAllExamMarks = CatchAsync(async (req, res) => {
   const features = new APIFeatures(ExamMark.find(), req.query, {
     defaultSort: 'createdAt',
     defaultFields: '-updatedAt',
+    searchFields: [
+      'studentId',
+      'examId',
+      'classAcademicId',
+      'teacherSubjectId',
+      'marks',
+    ],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const examMarkCount = await ExamMark.countDocuments(features.filterQuery);
-    if (examMarkCount > 0 && features.skip >= examMarkCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allExamMarks = await features.query;
-  res.status(200).json({ status: 'success', data: { allExamMarks } });
+  const { documents: allExamMarks, pagination } = await features.execute();
+  res.status(200).json({
+    status: 'success',
+    results: allExamMarks.length,
+    pagination,
+    data: { allExamMarks },
+  });
 });
 
 exports.getOneExamMark = CatchAsync(async (req, res, next) => {

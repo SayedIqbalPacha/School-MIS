@@ -15,24 +15,19 @@ exports.getAllStudentClasses = CatchAsync(async (req, res) => {
   const features = new APIFeatures(StudentClass.find(), req.query, {
     defaultSort: 'createdAt',
     defaultFields: '-updatedAt',
+    searchFields: ['studentId', 'classAcademicId'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const studentClassCount = await StudentClass.countDocuments(
-      features.filterQuery,
-    );
-    if (studentClassCount > 0 && features.skip >= studentClassCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allStudentClasses = await features.query;
+  const { documents: allStudentClasses, pagination } = await features.execute();
   res.status(200).json({
     status: 'success',
+    results: allStudentClasses.length,
+    pagination,
     data: { allStudentClasses },
   });
 });

@@ -15,24 +15,20 @@ exports.getAllTeacherSubjects = CatchAsync(async (req, res) => {
   const features = new APIFeatures(TeacherSubject.find(), req.query, {
     defaultSort: 'createdAt',
     defaultFields: '-updatedAt',
+    searchFields: ['teacherId', 'subjectClassId', 'classAcademicId'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const teacherSubjectCount = await TeacherSubject.countDocuments(
-      features.filterQuery,
-    );
-    if (teacherSubjectCount > 0 && features.skip >= teacherSubjectCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allTeacherSubjects = await features.query;
+  const { documents: allTeacherSubjects, pagination } =
+    await features.execute();
   res.status(200).json({
     status: 'success',
+    results: allTeacherSubjects.length,
+    pagination,
     data: { allTeacherSubjects },
   });
 });

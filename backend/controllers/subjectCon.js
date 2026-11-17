@@ -19,24 +19,19 @@ exports.getAllSubjects = CatchAsync(async (req, res) => {
   const features = new APIFeatures(subjectModel.find(), req.query, {
     defaultSort: 'subjectName',
     defaultFields: '-updatedAt',
+    searchFields: ['subjectName'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const subjectCount = await subjectModel.countDocuments(
-      features.filterQuery,
-    );
-
-    if (subjectCount > 0 && features.skip >= subjectCount)
-      throw new AppError('This page does not exist', 404);
-  }
-
-  const allSubjects = await features.query;
+  const { documents: allSubjects, pagination } = await features.execute();
   res.status(200).json({
     status: 'success',
+    results: allSubjects.length,
+    pagination,
     data: { allSubjects },
   });
 });

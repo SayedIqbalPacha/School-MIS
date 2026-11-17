@@ -15,21 +15,21 @@ exports.getAllStudents = CatchAsync(async (req, res) => {
   const features = new APIFeatures(Student.find(), req.query, {
     defaultSort: 'firstName',
     defaultFields: '-updatedAt',
+    searchFields: ['firstName', 'lastName', 'email', 'phone', 'parentName'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const studentCount = await Student.countDocuments(features.filterQuery);
-    if (studentCount > 0 && features.skip >= studentCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allStudents = await features.query;
-  res.status(200).json({ status: 'success', data: { allStudents } });
+  const { documents: allStudents, pagination } = await features.execute();
+  res.status(200).json({
+    status: 'success',
+    results: allStudents.length,
+    pagination,
+    data: { allStudents },
+  });
 });
 
 exports.getOneStudent = CatchAsync(async (req, res, next) => {

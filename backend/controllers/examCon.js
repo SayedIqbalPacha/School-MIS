@@ -15,21 +15,21 @@ exports.getAllExams = CatchAsync(async (req, res) => {
   const features = new APIFeatures(Exam.find(), req.query, {
     defaultSort: 'startDate',
     defaultFields: '-updatedAt',
+    searchFields: ['examName', 'examType'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const examCount = await Exam.countDocuments(features.filterQuery);
-    if (examCount > 0 && features.skip >= examCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allExams = await features.query;
-  res.status(200).json({ status: 'success', data: { allExams } });
+  const { documents: allExams, pagination } = await features.execute();
+  res.status(200).json({
+    status: 'success',
+    results: allExams.length,
+    pagination,
+    data: { allExams },
+  });
 });
 
 exports.getOneExam = CatchAsync(async (req, res, next) => {

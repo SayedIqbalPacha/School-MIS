@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
-const appError = require('../utils/appError');
+const AppError = require('../utils/appError');
+const APIFeatures = require('../utils/apiFeatures');
 
 // is the allowedFields is a keyword?
 const filterdObject = (obj, ...allowedFields) => {
@@ -13,12 +14,25 @@ const filterdObject = (obj, ...allowedFields) => {
 };
 
 // get all users
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
+exports.getAllUsers = catchAsync(async (req, res) => {
+  const features = new APIFeatures(User.find(), req.query, {
+    defaultSort: 'name',
+    defaultFields: '-__v',
+    baseFilter: { active: { $ne: false } },
+    searchFields: ['name', 'email', 'roles'],
+  })
+    .filter()
+    .search()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const { documents: users, pagination } = await features.execute();
 
   res.status(200).json({
     status: 'success',
     results: users.length,
+    pagination,
     data: { users },
   });
 });
@@ -27,7 +41,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 exports.getOneUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id);
   if (!user) {
-    return next(new appError('No user found with that ID', 404));
+    return next(new AppError('No user found with that ID', 404));
   }
   res.status(200).json({
     status: 'success',
@@ -43,7 +57,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
 
-  if (!user) return next(new appError('No user found with that ID', 404));
+  if (!user) return next(new AppError('No user found with that ID', 404));
 
   res.status(200).json({
     status: 'success',
@@ -64,7 +78,7 @@ exports.deleteUser = catchAsync(async (req, res) => {
 exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
     return next(
-      new appError(
+      new AppError(
         'This route is not for password updates. Please use /updateMyPassword.',
         400,
       ),

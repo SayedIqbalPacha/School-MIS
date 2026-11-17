@@ -15,21 +15,21 @@ exports.getAllTeachers = CatchAsync(async (req, res) => {
   const features = new APIFeatures(Teacher.find(), req.query, {
     defaultSort: 'teacherName',
     defaultFields: '-updatedAt',
+    searchFields: ['teacherName', 'teacherLast', 'email', 'phone'],
   })
     .filter()
+    .search()
     .sort()
     .limitFields()
     .paginate();
 
-  if (req.query.page) {
-    const teacherCount = await Teacher.countDocuments(features.filterQuery);
-    if (teacherCount > 0 && features.skip >= teacherCount) {
-      throw new AppError('This page does not exist', 404);
-    }
-  }
-
-  const allTeachers = await features.query;
-  res.status(200).json({ status: 'success', data: { allTeachers } });
+  const { documents: allTeachers, pagination } = await features.execute();
+  res.status(200).json({
+    status: 'success',
+    results: allTeachers.length,
+    pagination,
+    data: { allTeachers },
+  });
 });
 
 exports.getOneTeacher = CatchAsync(async (req, res, next) => {
