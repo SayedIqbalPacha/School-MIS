@@ -32,7 +32,8 @@ const createSendToken = (user, statusCode, res) => {
   const cookieOptions = {
     ...getCookieOptions(),
     expires: new Date(
-      Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
+      Date.now() +
+        Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000,
     ),
   };
   res.cookie('jwt', token, cookieOptions);
@@ -85,7 +86,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.protect = catchAsync(async (req, res, next) => {
   // The browser sends the HttpOnly JWT cookie automatically with credentials.
-  const token = req.cookies?.jwt;
+  const token = req.cookies && req.cookies.jwt;
 
   if (!token) {
     return next(
