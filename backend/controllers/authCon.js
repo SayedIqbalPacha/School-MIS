@@ -1,10 +1,10 @@
 const { promisify } = require('util');
-const appError = require('../utils/appError');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
-const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/email');
-const crypto = require('crypto');
 
 const getCookieOptions = () => {
   const sameSite = (process.env.JWT_COOKIE_SAME_SITE || 'lax').toLowerCase();
@@ -18,11 +18,10 @@ const getCookieOptions = () => {
 };
 
 // This is used to create token based on id
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+const signToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
-};
 
 // here we make a reusable response for client when we send him token
 const createSendToken = (user, statusCode, res) => {
@@ -70,7 +69,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
   //1 check if the password and email is exist or not
   if (!email || !password) {
-    return next(new appError('Please provide email and password', 400));
+    return next(new AppError('Please provide email and password', 400));
   }
 
   //2 check if the user exist and password is correct or not
@@ -78,7 +77,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new appError('Incorrect email or password', 401));
+    return next(new AppError('Incorrect email or password', 401));
   }
 
   createSendToken(user, 200, res);
@@ -90,7 +89,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (!token) {
     return next(
-      new appError('You are not logged in! Please log in to get access.', 401),
+      new AppError('You are not logged in! Please log in to get access.', 401),
     );
   }
 
@@ -103,7 +102,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
     return next(
-      new appError(
+      new AppError(
         'The user belonging to this token does no longer exist.',
         401,
       ),
@@ -114,7 +113,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   // iat issued at mean the time that the token was made and issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
-      new appError('User recently changed password! Please log in again.', 401),
+      new AppError('User recently changed password! Please log in again.', 401),
     );
   }
 
@@ -125,24 +124,24 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 // AUTHORIAZATION
 // ...roles is called rest parameter and used to pass an array of roles to the function
-exports.restrictTo = (...roles) => {
-  return (req, res, next) => {
+exports.restrictTo =
+  (...roles) =>
+  (req, res, next) => {
     if (!roles.includes(req.user.roles)) {
       return next(
-        new appError('You do not have permission to perform this action', 403),
+        new AppError('You do not have permission to perform this action', 403),
       );
     }
 
     next();
   };
-};
 
 //  Password forgot
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   //1) check if user exist based on emial
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(new appError('there is no user with this email address', 404));
+    return next(new AppError('there is no user with this email address', 404));
   }
 
   //2) generate reset token
@@ -172,7 +171,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     return next(
-      new appError(
+      new AppError(
         'There is an error sending the email, please try again',
         500,
       ),
@@ -194,7 +193,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   });
 
   if (!user) {
-    return next(new appError('invalid token or wrong user', 400));
+    return next(new AppError('invalid token or wrong user', 400));
   }
 
   user.password = req.body.password;
@@ -213,7 +212,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   //2) check if the current password is correct
   if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
-    return next(new appError('your current password is wrong.', 401));
+    return next(new AppError('your current password is wrong.', 401));
   }
 
   // 3) if everything is correct then run the schema validatoin and do update

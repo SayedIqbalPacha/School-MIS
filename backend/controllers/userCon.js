@@ -14,10 +14,32 @@ const filterdObject = (obj, ...allowedFields) => {
 };
 
 // get all users
-exports.getAllUsers = catchAsync(async (req, res) => {
+exports.getAllUsers = catchAsync(async (req, res, next) => {
+  const sensitiveFields = new Set([
+    'password',
+    'passwordConfirm',
+    'passwordResetToken',
+    'passwordResetExpires',
+    'passwordChangedAt',
+  ]);
+
+  if (typeof req.query.fields === 'string') {
+    const requestedSensitiveFields = req.query.fields
+      .split(',')
+      .map((field) => field.trim())
+      .filter((field) => sensitiveFields.has(field.replace(/^\+/, '')));
+
+    if (requestedSensitiveFields.length) {
+      return next(
+        new AppError('Sensitive user fields cannot be selected', 400),
+      );
+    }
+  }
+
   const features = new APIFeatures(User.find(), req.query, {
     defaultSort: 'name',
-    defaultFields: '-__v',
+    defaultFields:
+      '-__v -password -passwordConfirm -passwordResetToken -passwordResetExpires -passwordChangedAt',
     baseFilter: { active: { $ne: false } },
     searchFields: ['name', 'email', 'roles'],
   })
@@ -66,8 +88,12 @@ exports.updateUser = catchAsync(async (req, res, next) => {
 });
 
 // Permanently delete a user. This route is restricted to managers.
-exports.deleteUser = catchAsync(async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  const user = await User.findByIdAndDelete(req.params.id);
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
+
   res.status(204).json({
     status: 'success',
     data: null,

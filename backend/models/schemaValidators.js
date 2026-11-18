@@ -19,31 +19,58 @@ exports.isNonNegativeDecimal = function (value) {
   );
 };
 
+const preventDeletionWithReferences = async (
+  record,
+  dependentReferences,
+  recordName,
+) => {
+  if (!record) return;
+
+  const references = await Promise.all(
+    dependentReferences.map(async ({ modelName, field, label }) => {
+      const exists = await mongoose
+        .model(modelName)
+        .exists({ [field]: record._id });
+      return exists ? label : null;
+    }),
+  );
+  const existingReferences = references.filter(Boolean);
+
+  if (existingReferences.length) {
+    throw new AppError(
+      `Cannot delete this ${recordName} because it is referenced by ${existingReferences.join(', ')}`,
+      409,
+    );
+  }
+};
+
 exports.preventDeletionWhenReferenced = (dependentReferences, recordName) =>
   async function () {
-    const { includeInactive } = this.getOptions();
-
-    const recordQuery = this.model.findOne(this.getQuery());
-    if (includeInactive) recordQuery.setOptions({ includeInactive: true });
+    const recordQuery = this.model
+      .findOne(this.getQuery())
+      .setOptions({ includeInactive: true });
     const record = await recordQuery;
-    if (!record) return;
-
-    const references = await Promise.all(
-      dependentReferences.map(async ({ modelName, field, label }) => {
-        const exists = await mongoose
-          .model(modelName)
-          .exists({ [field]: record._id });
-        return exists ? label : null;
-      }),
+    await preventDeletionWithReferences(
+      record,
+      dependentReferences,
+      recordName,
     );
-    const existingReferences = references.filter(Boolean);
+  };
 
-    if (existingReferences.length) {
-      throw new AppError(
-        `Cannot delete this ${recordName} because it is referenced by ${existingReferences.join(', ')}`,
-        409,
-      );
-    }
+exports.preventDeactivationWhenReferenced = (dependentReferences, recordName) =>
+  async function () {
+    const update = this.getUpdate() || {};
+    const updatedFields = update.$set || update;
+    if (updatedFields.active !== false) return;
+
+    const record = await this.model
+      .findOne(this.getQuery())
+      .setOptions({ includeInactive: true });
+    await preventDeletionWithReferences(
+      record,
+      dependentReferences,
+      recordName,
+    );
   };
 
 exports.validateDateOrderOnUpdate = (startField, endField, message) =>

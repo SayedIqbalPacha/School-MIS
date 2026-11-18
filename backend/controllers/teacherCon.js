@@ -42,6 +42,13 @@ exports.getOneTeacher = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateTeacher = CatchAsync(async (req, res, next) => {
+  if (
+    Object.prototype.hasOwnProperty.call(req.body, 'active') &&
+    req.body.active !== true
+  ) {
+    return next(new AppError('Use DELETE to deactivate a teacher', 400));
+  }
+
   const updatedTeacher = await Teacher.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -55,9 +62,11 @@ exports.updateTeacher = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteTeacher = CatchAsync(async (req, res, next) => {
-  const teacher = await Teacher.findByIdAndDelete(req.params.id).setOptions({
-    includeInactive: true,
-  });
+  const teacher = await Teacher.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    { $set: { active: false } },
+    { new: true, runValidators: true },
+  ).setOptions({ includeInactive: true });
   if (!teacher) return next(new AppError('No teacher found with that ID', 404));
 
   res.status(204).json({

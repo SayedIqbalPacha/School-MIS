@@ -68,6 +68,12 @@ module.exports = (err, req, res, next) => {
   let error = err;
 
   // Normalize database and token errors in both environments.
+  if (error.type === 'entity.parse.failed') {
+    error = new AppError('Invalid JSON request body.', 400);
+  }
+  if (error.type === 'entity.too.large') {
+    error = new AppError('Request body is too large.', 413);
+  }
   if (error.name === 'CastError') error = handleCastErrorDB(error);
   if (error.code === 11000) error = handleDuplicateFieldsDB(error);
   if (error.name === 'ValidationError') error = handleValidationErrorDB(error);

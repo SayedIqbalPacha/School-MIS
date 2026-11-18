@@ -42,6 +42,13 @@ exports.getOneStudent = CatchAsync(async (req, res, next) => {
 });
 
 exports.updateStudent = CatchAsync(async (req, res, next) => {
+  if (
+    Object.prototype.hasOwnProperty.call(req.body, 'active') &&
+    req.body.active !== true
+  ) {
+    return next(new AppError('Use DELETE to deactivate a student', 400));
+  }
+
   const updatedStudent = await Student.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -55,9 +62,11 @@ exports.updateStudent = CatchAsync(async (req, res, next) => {
 });
 
 exports.deleteStudent = CatchAsync(async (req, res, next) => {
-  const student = await Student.findByIdAndDelete(req.params.id).setOptions({
-    includeInactive: true,
-  });
+  const student = await Student.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    { $set: { active: false } },
+    { new: true, runValidators: true },
+  ).setOptions({ includeInactive: true });
   if (!student) return next(new AppError('No student found with that ID', 404));
 
   res.status(204).json({

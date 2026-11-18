@@ -79,6 +79,20 @@ studentSchema.pre(
     'student',
   ),
 );
+studentSchema.pre(
+  'findOneAndUpdate',
+  checks.preventDeactivationWhenReferenced(
+    [
+      {
+        modelName: 'StudentClass',
+        field: 'studentId',
+        label: 'student-class enrollments',
+      },
+      { modelName: 'ExamMark', field: 'studentId', label: 'exam marks' },
+    ],
+    'student',
+  ),
+);
 
 studentSchema.pre(/^(find|countDocuments)/, function (next) {
   const options = this.getOptions();

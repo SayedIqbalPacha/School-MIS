@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config({ path: path.join(__dirname, 'config', 'config.env') });
 
 // unchaught exception are those erros that can occure in our app and we did not handle them.
 // like calling a variable that does not exist.
@@ -11,17 +14,36 @@ process.on('uncaughtException', (err) => {
 
 const app = require('./app');
 
-dotenv.config({ path: './config/config.env' });
-
 if (!process.env.DATABASE) {
-  throw new Error('DATABASE is missing from config/config.env');
+  throw new Error('DATABASE is missing from backend/config/config.env');
 }
 
 if (
   process.env.DATABASE.includes('<PASSWORD>') &&
   !process.env.DATABASE_PASSWORD
 ) {
-  throw new Error('DATABASE_PASSWORD is missing from config/config.env');
+  throw new Error(
+    'DATABASE_PASSWORD is missing from backend/config/config.env',
+  );
+}
+
+const requiredAuthSettings = [
+  'JWT_SECRET',
+  'JWT_EXPIRES_IN',
+  'JWT_COOKIE_EXPIRES_IN',
+];
+const missingAuthSettings = requiredAuthSettings.filter(
+  (name) => !process.env[name],
+);
+if (missingAuthSettings.length) {
+  throw new Error(
+    `Missing authentication settings in config/config.env: ${missingAuthSettings.join(', ')}`,
+  );
+}
+
+const cookieExpirationDays = Number(process.env.JWT_COOKIE_EXPIRES_IN);
+if (!Number.isFinite(cookieExpirationDays) || cookieExpirationDays <= 0) {
+  throw new Error('JWT_COOKIE_EXPIRES_IN must be a positive number of days');
 }
 
 const DB = process.env.DATABASE.replace(

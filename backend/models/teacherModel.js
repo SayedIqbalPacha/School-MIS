@@ -74,6 +74,19 @@ teacherSchema.pre(
     'teacher',
   ),
 );
+teacherSchema.pre(
+  'findOneAndUpdate',
+  checks.preventDeactivationWhenReferenced(
+    [
+      {
+        modelName: 'TeacherSubject',
+        field: 'teacherId',
+        label: 'teacher-subject assignments',
+      },
+    ],
+    'teacher',
+  ),
+);
 
 teacherSchema.pre(/^(find|countDocuments)/, function (next) {
   const options = this.getOptions();

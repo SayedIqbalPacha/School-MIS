@@ -30,7 +30,7 @@ const subjectSchema = new mongoose.Schema(
 );
 
 subjectSchema.virtual('nameLength').get(function () {
-  return this.subjectName.length;
+  return this.subjectName ? this.subjectName.length : undefined;
 });
 
 subjectSchema.pre(
